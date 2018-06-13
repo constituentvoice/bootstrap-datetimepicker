@@ -1457,6 +1457,7 @@
 
         picker.hide = hide;
 
+
         picker.disable = function () {
             ///<summary>Disables the input element, the component is attached to, by adding a disabled="true" attribute to it.
             ///If the widget was visible before that call it is hidden. Possibly emits dp.hide</summary>
@@ -1563,6 +1564,49 @@
 
             return picker;
         };
+
+        picker.pickTimeZone = function(pick) {
+            if (arguments.length === 0) {
+                return options.pickTimeZone;
+            }
+
+
+            if( typeof pick === 'string' ) {
+                if (/on|true|1/.test(pick) ) {
+                    pick = true;
+                }
+                else if(/off|false|0/.test(pick) ) {
+                    pick = false;
+                }
+            }
+
+            if( typeof pick !== 'boolean' ) {
+                throw new TypeError('pickTimeZone() expects a string or boolean');
+            }
+            
+            if(!moment.tz && pick) {
+                throw "Moment-Timezone must be loaded to pick timezones";
+            }
+
+            options.pickTimeZone = pick;
+            return picker
+        };
+
+        picker.validTimeZones = function(names) {
+            if( arguments.length === 0 ) {
+                return options.validTimeZones;
+            }
+
+            if( typeof names !== 'Array' ) {
+                throw new TypeError('validTimeZones() must be an array');
+            }
+
+            if( names.length === 0 ) {
+                names = moment.tz.getNames();
+            }
+
+			options.validTimeZones = names
+		};
 
         picker.dayViewHeaderFormat = function (newFormat) {
             if (arguments.length === 0) {
@@ -2480,6 +2524,7 @@
 
     $.fn.datetimepicker.defaults = {
         timeZone: '',
+        pickTimeZone: false,
         format: false,
         dayViewHeaderFormat: 'MMMM YYYY',
         extraFormats: false,

@@ -282,9 +282,49 @@
                     bottomRow.append($('<td>').addClass('separator'));
                 }
 
-                return $('<div>').addClass('timepicker-picker')
+                var template = $('<div>').addClass('timepicker-picker')
                     .append($('<table>').addClass('table-condensed')
                         .append([topRow, middleRow, bottomRow]));
+
+                if (options.pickTimeZone) {
+                    template.append(getTimePickerTimeZoneTemplate());
+                }
+
+                return template;
+            },
+
+            getTimePickerTimeZoneTemplate = function() {
+                var tzNames = [];
+                var currentZone = options.timeZone ? options.timeZone : moment.tz.guess();
+
+                var validZones = options.validTimeZones.length > 0 ? options.validTimeZones : moment.tz.names();
+                $.each(validZones, function(idx, tzName) {
+                    var tzAlias = '';
+                    if( $.isArray(tzName) ) {
+                        tzName = tzName[0];
+                        tzAlias = tzName[1];
+                    }
+                    else if(typeof tzName === 'string' ) {
+                        tzAlias = tzName;
+                    }
+                    else {
+                        throw "List of time-zone names must contain strings or arrays";
+                    }
+
+                    var selected = false;
+                    if(tzName == currentZone || tzAlias == currentZone) {
+                        selected = true;
+                    }
+
+                    tzNames.push($('<option>').attr({'value': tzName}).prop('selected', selected).html(tzAlias));
+                });
+
+                var tzView = $('<div>').addClass('timepicker-timezone col-md-12');
+                var tzSelect = $('<select>').html(tzNames);
+                tzSelect.addClass('form-control timepicker-tz-select');
+                tzView.append(tzSelect);
+
+                return tzView;
             },
 
             getTimePickerTemplate = function () {
@@ -293,8 +333,9 @@
                     minutesView = $('<div>').addClass('timepicker-minutes')
                         .append($('<table>').addClass('table-condensed')),
                     secondsView = $('<div>').addClass('timepicker-seconds')
-                        .append($('<table>').addClass('table-condensed')),
-                    ret = [getTimePickerMainTemplate()];
+                        .append($('<table>').addClass('table-condensed'));
+
+                var ret = [getTimePickerMainTemplate()];
 
                 if (isEnabled('h')) {
                     ret.push(hoursView);
@@ -1596,17 +1637,19 @@
             if( arguments.length === 0 ) {
                 return options.validTimeZones;
             }
-
-            if( typeof names !== 'Array' ) {
+            
+            if( !$.isArray(names)) {
                 throw new TypeError('validTimeZones() must be an array');
             }
 
             if( names.length === 0 ) {
-                names = moment.tz.getNames();
+                names = moment.tz.names();
             }
 
-			options.validTimeZones = names
-		};
+
+            options.validTimeZones = names
+            return picker;
+        };
 
         picker.dayViewHeaderFormat = function (newFormat) {
             if (arguments.length === 0) {
@@ -2525,6 +2568,7 @@
     $.fn.datetimepicker.defaults = {
         timeZone: '',
         pickTimeZone: false,
+        validTimeZones: [],
         format: false,
         dayViewHeaderFormat: 'MMMM YYYY',
         extraFormats: false,
